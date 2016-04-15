@@ -46,7 +46,7 @@ void initialize(void)
 	/* initialize player and robots structure vars */
 	p.location = 0;
 	p.state = 0;
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < ROBOTCOUNT; i++)
 	{
 		robots[i].location = 0;
 		robots[i].state = 0;
@@ -60,6 +60,7 @@ void initialize(void)
 void reset(void)
 {
 	extern char map[];
+	extern char stats[];
 	extern struct player p;
 	extern struct player robots[];
 
@@ -70,12 +71,18 @@ void reset(void)
 
 	/* bring player and robots to life */
 	p.state = 0;
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < ROBOTCOUNT; i++)
 		robots[i].state = 0;
 
 	/* set player / robots start position */
 	setPlayerStartLocation();
 	setRobotsStartLocations();
+
+	/* initialize stats */
+	stats[0] = ROBOTCOUNT; /* ROBOTS REMAINING */
+	stats[1] = 1; /* SAFE JUMPS */
+	stats[2] = 0; /* BOMBS */
+	stats[3] = 0; /* ARMOR */
 }
 
 /* function to generate random map layout */
@@ -88,22 +95,22 @@ void generateMap(void)
 	/* initialize basic map */
 	for(i = 0; i < CELLS; i++)
 	{
-		if(rand() % 10 == 5)
+		if(rand() % 21 == 11)
 			map[i] = 16;
 		else
 			map[i] = 0;
 	}
 
 	/* borders */
-	for(i = 0; i < W; i++)
+	for(i = 0; i < DIM; i++)
 	{
 		map[i] = 16;
-		map[i + 180] = 16;
+		map[i + CELLS - DIM] = 16;
 	}
-	for(i = 1; i < H - 1; i++)
+	for(i = 1; i < DIM - 1; i++)
 	{
-		map[i * W] = 16;
-		map[i * W + 19] = 16;
+		map[i * DIM] = 16;
+		map[i * DIM + (DIM - 1)] = 16;
 	}
 
 	/* update walls */
@@ -112,17 +119,17 @@ void generateMap(void)
 		v = 0;
 		if(map[i] == 16)
 		{
-			if(i > 19)
-				if(map[i - 20] > 15)
+			if(i > (DIM - 1))
+				if(map[i - DIM] > 15)
 					v = v + 8;
-			if((i % 20) != 0)
+			if((i % DIM) != 0)
 				if(map[i - 1] > 15)
 					v = v + 4;
-			if(((i + 1) % 20) != 0)
+			if(((i + 1) % DIM) != 0)
 				if(map[i + 1] > 15)
 					v = v + 2;
-			if(i < 180)
-				if(map[i + 20] > 15)
+			if(i < (CELLS - DIM))
+				if(map[i + DIM] > 15)
 					v = v + 1;
 			map[i] = v + 16;
 		}
@@ -137,9 +144,9 @@ void generateMap(void)
 			v = 0;
 			if(map[i - 1] > 15)
 				v = v + 1;
-			if(map[i - 21] > 15)
+			if(map[i - (DIM + 1)] > 15)
 				v = v + 2;
-			if(map[i - 20] > 15)
+			if(map[i - DIM] > 15)
 				v = v + 4;
 
 			if(v == 7)
@@ -166,7 +173,7 @@ void setPlayerStartLocation(void)
 
 	do
 	{
-		p.location = (rand() % 200);
+		p.location = (rand() % CELLS);
 	} while (map[p.location] > 15);	
 }
 
@@ -179,12 +186,12 @@ void setRobotsStartLocations(void)
 
 	int r, i, j;
 	char b;
-	for(j = 0; j < 5; j++)
+	for(j = 0; j < ROBOTCOUNT; j++)
 	{
 		do
 		{
 			b = 0; /* init false */
-			r = (rand() % 200);
+			r = (rand() % CELLS);
 			for(i = j; i > 0; i--)
 			{
 				if(robots[i - 1].location == r)
@@ -214,25 +221,25 @@ void renderMap(void)
 	SDL_Rect destination;
 	destination.w = destination.h = 32;
 	
-	for(r = 0; r < H; r++)
-		for(c = 0; c < W; c++)
+	for(r = 0; r < DIM; r++)
+		for(c = 0; c < DIM; c++)
 		{
 			destination.x = 32 * c;
 			destination.y = 32 * r;
-			SDL_RenderCopy(renderer, texture, &tiles[map[(r * W) + c]], &destination);
+			SDL_RenderCopy(renderer, texture, &tiles[map[(r * DIM) + c]], &destination);
 		}
 
 	/* corner fixes */
 	destination.w = destination.h = 8;
-	for(r = 1; r < (H - 1); r++)
-		for(c = 1; c < (W - 1); c++)
+	for(r = 1; r < (DIM - 1); r++)
+		for(c = 1; c < (DIM - 1); c++)
 		{
-			if(map[(r * W) + c] < 7)
+			if(map[(r * DIM) + c] < 7)
 			{
-				c0 = map[((r - 1) * W) + (c - 1)];
-				c1 = map[((r - 1) * W) + (c + 1)];
-				c2 = map[((r + 1) * W) + (c - 1)];
-				c3 = map[((r + 1) * W) + (c + 1)];
+				c0 = map[((r - 1) * DIM) + (c - 1)];
+				c1 = map[((r - 1) * DIM) + (c + 1)];
+				c2 = map[((r + 1) * DIM) + (c - 1)];
+				c3 = map[((r + 1) * DIM) + (c + 1)];
 
 				if((c0 == 19) || (c0 == 27) || (c0 == 23) || (c0 == 31))
 				{
@@ -284,8 +291,8 @@ void renderPlayer(void)
 	int x, y;	
 	SDL_Rect destination;
 
-	y = (int) floor(p.location / 20);
-	x = (int) (p.location - (y * 20));
+	y = (int) floor(p.location / DIM);
+	x = (int) (p.location - (y * DIM));
 	destination.w = destination.h = 32;
 	destination.x = x * 32;
 	destination.y = y * 32;
@@ -306,10 +313,10 @@ void renderRobots(void)
 	int x, y, i;	
 	SDL_Rect destination;
 
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < ROBOTCOUNT; i++)
 	{
-		y = (int) floor(robots[i].location / 20);
-		x = (int) (robots[i].location - (y * 20));
+		y = (int) floor(robots[i].location / DIM);
+		x = (int) (robots[i].location - (y * DIM));
 		destination.w = destination.h = 32;
 		destination.x = x * 32;
 		destination.y = y * 32;
@@ -320,9 +327,34 @@ void renderRobots(void)
 	}
 }
 
+void renderStats(void)
+{
+	extern SDL_Renderer* renderer;
+	extern SDL_Texture* texture;
+	extern SDL_Rect tiles[];
+	extern char stats[];
+
+	int i, v;
+
+	SDL_Rect destination;
+	destination.w = destination.h = 32;
+	destination.x = 0;
+	destination.y = HEIGHT - 32;
+
+	/* render robot icon */
+	SDL_RenderCopy(renderer, texture, &tiles[42], &destination);
+	v = stats[0];
+	for(i = 1; i > -1; i--)
+	{
+		destination.x = 32 + (i * 32);
+		SDL_RenderCopy(renderer, texture, &tiles[32 + (v % 10)], &destination);
+		v = v / 10;
+	}
+}
+
 int getCellNumberFromMouseCoordinates(int x, int y)
 {
-	return (int) (floor((double) x / 32) + (floor((double) y / 32) * 20));
+	return (int) (floor((double) x / 32) + (floor((double) y / 32) * DIM));
 }
 
 char isHoveringTheNeighborhood(int cell)
@@ -341,8 +373,8 @@ char isHoveringTheNeighborhood(int cell)
 void setHoveringRectanglePosition(struct SDL_Rect* r, int cell)
 {
 	int x, y;
-	y = (int) floor(cell / 20);
-	x = (int) (cell - (y * 20));
+	y = (int) floor(cell / DIM);
+	x = (int) (cell - (y * DIM));
 	r->y = y * 32;
 	r->x = x * 32;
 }
@@ -355,7 +387,7 @@ void movePlayer(int next_location)
 
 	int i;
 	p.location = next_location;
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < ROBOTCOUNT; i++)
 	{
 		if(robots[i].location == p.location)
 		{
@@ -372,6 +404,7 @@ void movePlayer(int next_location)
 void moveRobots(void)
 {
 	extern char map[];
+	extern char stats[];
 	extern struct player p;
 	extern struct player robots[];
 
@@ -379,15 +412,15 @@ void moveRobots(void)
 	int nx, ny;
 	char hit;
 
-	py = (int) floor(p.location / 20);
-	px = (int) (p.location - (py * 20));
+	py = (int) floor(p.location / DIM);
+	px = (int) (p.location - (py * DIM));
 
-	for(i = 0; i < 5; i++)
+	for(i = 0; i < ROBOTCOUNT; i++)
 	{
 		if(robots[i].state == 0)
 		{
-			ry = (int) floor(robots[i].location / 20);
-			rx = (int) (robots[i].location - (ry * 20));
+			ry = (int) floor(robots[i].location / DIM);
+			rx = (int) (robots[i].location - (ry * DIM));
 			if(rx < px)
 				nx = rx + 1;
 			else if(rx > px)
@@ -399,37 +432,49 @@ void moveRobots(void)
 			else if(ry > py)
 				ny = ry - 1;
 			else ny = ry;
-			robots[i].location = (ny * 20) + nx;
+			robots[i].location = (ny * DIM) + nx;
+
+			/* check for collision with player */
 			if(robots[i].location == p.location)
 				p.state = 1;
 		}
 	}
 
-	for(j = 0; j < 5; j++)
+	/* check for robot collision with other robots */
+	for(j = 0; j < ROBOTCOUNT; j++)
 	{
 		hit = 0;
-		for(i = j + 1; i > 0; i--)
+		for(i = j; i > 0; i--)
 		{
-			if(robots[j].state != 1)
-				if(robots[i].state != 1)
-					if(i != j)
-						if(robots[j].location == robots[i].location)
-						{
-							robots[i].state = 1;
-							hit = 1;
-						}
+			if(i != j)
+				if(robots[j].location == robots[i].location)
+				{
+					robots[i].state = 1;
+					robots[j].state = 1;
+					hit = 1;
+				}
 
 		}
 		if(hit == 1)
 			robots[j].state = 1;
 	}
 
-	for(i = 0; i < 5; i++)
+	/* check for collision with walls */
+	for(i = 0; i < ROBOTCOUNT; i++)
 	{
 		if(robots[i].state == 0)
 			if(map[robots[i].location] > 15)
 				robots[i].state = 1;
 	}
+
+	/* update stats */
+	j = 0;
+	for(i = 0; i < ROBOTCOUNT; i++)
+	{
+		if(robots[i].state == 0)
+			j++;
+	}
+	stats[0] = j;
 }
 
 

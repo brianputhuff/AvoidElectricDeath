@@ -14,6 +14,12 @@
 
 #include "SDL2/SDL.h"
 
+#define WIDTH 640
+#define HEIGHT 672
+#define CELLS 400
+#define ROBOTCOUNT 20
+#define DIM 20
+
 /* rendering pointers */
 SDL_Renderer* renderer;
 SDL_Texture* texture;
@@ -23,7 +29,10 @@ SDL_Rect tiles[48];
 SDL_Rect corners[4];
 
 /* map data */
-char map[200];
+char map[CELLS];
+
+/* stats */
+char stats[4];
 
 /* player struct */
 struct player
@@ -33,7 +42,7 @@ struct player
 } p;
 
 /* robot struct array */
-struct player robots[5];
+struct player robots[ROBOTCOUNT];
 
 #endif
 

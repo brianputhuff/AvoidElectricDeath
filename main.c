@@ -12,10 +12,6 @@
 	Updated: Wed Apr 13 23:31:00 PDT 2016
 */
 
-#define WIDTH	640
-#define HEIGHT	320
-#define CELLS	200
-#define ROBOTS	5
 
 enum {FALSE = 0, TRUE = 1};
 
@@ -110,6 +106,7 @@ int main(int argc, char** argv)
 		renderPlayer();
 		if(is_hovering == TRUE)
 			renderHoverTile(&hover_position);
+		renderStats();
 		SDL_RenderPresent(renderer);
 		
 		invalid_move = FALSE;

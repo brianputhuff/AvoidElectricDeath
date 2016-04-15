@@ -16,9 +16,6 @@
 #include <stdlib.h>
 #include "SDL2/SDL.h"
 #include "aed_variables.h"
-#define CELLS	200
-#define W	20
-#define H	10
 
 /* initializers */
 void initialize(void);
@@ -32,6 +29,7 @@ void renderMap(void);
 void renderHoverTile(struct SDL_Rect* destination);
 void renderPlayer(void);
 void renderRobots(void);
+void renderStats(void);
 
 /* functions */
 int getCellNumberFromMouseCoordinates(int x, int y);
