@@ -95,7 +95,7 @@ void generateMap(void)
 	/* initialize basic map */
 	for(i = 0; i < CELLS; i++)
 	{
-		if(rand() % 21 == 11)
+		if(rand() % 10 == 5)
 			map[i] = 16;
 		else
 			map[i] = 0;
@@ -443,20 +443,18 @@ void moveRobots(void)
 	/* check for robot collision with other robots */
 	for(j = 0; j < ROBOTCOUNT; j++)
 	{
-		hit = 0;
-		for(i = j; i > 0; i--)
+		for(i = 0; i < ROBOTCOUNT; i++)
 		{
 			if(i != j)
+			{
 				if(robots[j].location == robots[i].location)
 				{
 					robots[i].state = 1;
 					robots[j].state = 1;
-					hit = 1;
 				}
+			}
 
 		}
-		if(hit == 1)
-			robots[j].state = 1;
 	}
 
 	/* check for collision with walls */

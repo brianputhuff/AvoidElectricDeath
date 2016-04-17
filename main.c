@@ -9,9 +9,12 @@
 	by Brian Puthuff
 
 	main.c
-	Updated: Wed Apr 13 23:31:00 PDT 2016
+	Updated: Sat Apr 16 23:15:51 PDT 2016
 */
 
+
+/* function declaration for screenshots */
+void screenshot(SDL_Window* w, SDL_Renderer* r);
 
 enum {FALSE = 0, TRUE = 1};
 
@@ -121,13 +124,21 @@ int main(int argc, char** argv)
 					break;
 
 				case SDL_KEYDOWN:
-					if(event.key.keysym.sym == SDLK_F9)
+					switch(event.key.keysym.sym)
 					{
-						/* reset game */
-						reset();
-						is_playing = TRUE;
-						is_hovering = FALSE;
+						case SDLK_F9:
+							/* reset game */
+							reset();
+							is_playing = TRUE;
+							is_hovering = FALSE;
+							break;
+
+						case SDLK_F12:
+							/* screenshot */
+							screenshot(window, renderer);
+							break;
 					}
+
 					break;
 
 				case SDL_MOUSEBUTTONDOWN:
@@ -186,4 +197,16 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-
+void screenshot(SDL_Window* w, SDL_Renderer* r)
+{
+	SDL_Surface* ss = SDL_CreateRGBSurface(0, WIDTH, HEIGHT, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+	SDL_RenderReadPixels(r, NULL, SDL_GetWindowPixelFormat(w), ss->pixels, ss->pitch);
+	time_t current_time;
+	struct tm* time_info;
+	char filename[30];
+	time(&current_time);
+	time_info = localtime(&current_time);
+	strftime(filename, 31, "screenshot_%Y%m%d-%H%M%S.bmp", time_info);
+	SDL_SaveBMP(ss, filename);
+	SDL_FreeSurface(ss);
+}
